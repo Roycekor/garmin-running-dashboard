@@ -101,8 +101,9 @@ if not z2.empty:
                       range=[pace_max + pad, pace_min - pad],
                       tickvals=[v / 2 for v in range(8, 20)],
                       ticktext=[minutes_to_pace_str(v / 2) for v in range(8, 20)])
-    fig1.update_xaxes(title_text="Date")
-    fig1.update_layout(height=400, margin=dict(t=20))
+    fig1.update_xaxes(title_text="")
+    fig1.update_layout(height=400, margin=dict(t=20),
+                       legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5))
     st.plotly_chart(fig1, use_container_width=True)
 else:
     st.info("Zone2 pace data not available.")
@@ -125,7 +126,7 @@ if not hr.empty:
     drift_max = hr['hr_drift_percent'].max()
     drift_pad = (drift_max - drift_min) * 0.3 if drift_max > drift_min else 1
     fig2.update_yaxes(title_text="HR Drift (%)", range=[min(0, drift_min - drift_pad), drift_max + drift_pad])
-    fig2.update_xaxes(title_text="Date")
+    fig2.update_xaxes(title_text="")
     fig2.update_layout(height=400, margin=dict(t=20))
     st.plotly_chart(fig2, use_container_width=True)
 else:
@@ -171,7 +172,7 @@ if not ps.empty:
     cv_max = ps['pace_stability_cv'].max()
     cv_pad = (cv_max - cv_min) * 0.3 if cv_max > cv_min else 1
     fig4.update_yaxes(title_text="Pace CV (%)", range=[max(0, cv_min - cv_pad), cv_max + cv_pad])
-    fig4.update_xaxes(title_text="Date")
+    fig4.update_xaxes(title_text="")
     fig4.update_layout(height=400, margin=dict(t=20))
     st.plotly_chart(fig4, use_container_width=True)
 else:
