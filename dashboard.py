@@ -71,6 +71,10 @@ if df.empty:
     st.warning("No data for the selected filters.")
     st.stop()
 
+import datetime as _dt
+_x_min = df['activity_date'].min() - _dt.timedelta(days=3)
+_x_max = df['activity_date'].max() + _dt.timedelta(days=3)
+
 # --- 1. Zone2 Pace Trend ---
 st.header("1. Zone2 Pace Trend")
 st.caption("Zone2 비율 30% 이상인 런만 표시. Lower number is faster.")
@@ -90,7 +94,7 @@ if not z2.empty:
     ))
     fig1.add_trace(go.Scatter(
         x=z2['activity_date'], y=z2['rolling_avg'], mode='lines',
-        name='5-run avg', line=dict(color='#EF553B', width=2),
+        name='5-run avg', line=dict(color='#EF553B', width=2, shape='spline'),
         hovertemplate='%{x|%Y-%m-%d}<br>Avg: %{customdata}<extra></extra>',
         customdata=z2['rolling_avg'].apply(minutes_to_pace_str)
     ))
@@ -101,7 +105,7 @@ if not z2.empty:
                       range=[pace_max + pad, pace_min - pad],
                       tickvals=[v / 2 for v in range(8, 20)],
                       ticktext=[minutes_to_pace_str(v / 2) for v in range(8, 20)])
-    fig1.update_xaxes(title_text="")
+    fig1.update_xaxes(title_text="", range=[_x_min, _x_max])
     fig1.update_layout(height=400, margin=dict(t=20),
                        legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5))
     st.plotly_chart(fig1, use_container_width=True)
@@ -110,9 +114,9 @@ else:
 
 # --- 2. HR Drift ---
 st.header("2. HR Drift")
-st.caption("Below 5% = good aerobic fitness. Above 7% = needs attention.")
+st.caption("Zone2 비율 30% 이상인 런만 표시. Below 5% = good aerobic fitness. Above 7% = needs attention.")
 
-hr = df[df['hr_drift_percent'].notna()].copy()
+hr = df[(df['hr_drift_percent'].notna()) & (df['zone2_ratio'] >= 30)].copy()
 if not hr.empty:
     fig2 = go.Figure()
     colors = ['#00CC96' if v <= 5 else '#FFA15A' if v <= 7 else '#EF553B' for v in hr['hr_drift_percent']]
@@ -126,7 +130,7 @@ if not hr.empty:
     drift_max = hr['hr_drift_percent'].max()
     drift_pad = (drift_max - drift_min) * 0.3 if drift_max > drift_min else 1
     fig2.update_yaxes(title_text="HR Drift (%)", range=[min(0, drift_min - drift_pad), drift_max + drift_pad])
-    fig2.update_xaxes(title_text="")
+    fig2.update_xaxes(title_text="", range=[_x_min, _x_max])
     fig2.update_layout(height=400, margin=dict(t=20))
     st.plotly_chart(fig2, use_container_width=True)
 else:
@@ -149,6 +153,7 @@ if not wd.empty:
     fig3.update_traces(marker_color='#636EFA')
     km_max = weekly['total_km'].max()
     fig3.update_yaxes(range=[0, km_max * 1.3])
+    fig3.update_xaxes(range=[_x_min, _x_max])
     fig3.update_layout(height=400, margin=dict(t=20))
     st.plotly_chart(fig3, use_container_width=True)
 else:
@@ -172,7 +177,7 @@ if not ps.empty:
     cv_max = ps['pace_stability_cv'].max()
     cv_pad = (cv_max - cv_min) * 0.3 if cv_max > cv_min else 1
     fig4.update_yaxes(title_text="Pace CV (%)", range=[max(0, cv_min - cv_pad), cv_max + cv_pad])
-    fig4.update_xaxes(title_text="")
+    fig4.update_xaxes(title_text="", range=[_x_min, _x_max])
     fig4.update_layout(height=400, margin=dict(t=20))
     st.plotly_chart(fig4, use_container_width=True)
 else:
@@ -181,7 +186,7 @@ else:
 # --- Summary metrics ---
 st.divider()
 st.header("Summary")
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
     total_runs = len(df)
     st.metric("Total Runs", total_runs)
@@ -195,5 +200,11 @@ with col3:
     else:
         st.metric("Latest Z2 Pace", "N/A")
 with col4:
+    if not z2.empty:
+        best_pace = z2.loc[z2['pace_minutes'].idxmin(), 'zone2_avg_pace_min_km']
+        st.metric("Best Z2 Pace", best_pace)
+    else:
+        st.metric("Best Z2 Pace", "N/A")
+with col5:
     avg_drift = hr['hr_drift_percent'].mean() if not hr.empty else None
     st.metric("Avg HR Drift", f"{avg_drift:.1f}%" if avg_drift else "N/A")
