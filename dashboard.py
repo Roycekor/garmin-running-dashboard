@@ -180,8 +180,8 @@ if not _hp.empty:
     _x_idx = list(range(_n))
 
     fig0a = go.Figure()
-    fig0a.add_hrect(y0=137, y1=159, fillcolor='rgba(99,110,250,0.08)', line_width=0,
-                    annotation_text='Zone 2 (137-159)', annotation_position='top left',
+    fig0a.add_hrect(y0=137, y1=161, fillcolor='rgba(99,110,250,0.08)', line_width=0,
+                    annotation_text='Zone 2 (137-161)', annotation_position='top left',
                     annotation_font_size=10, annotation_font_color='rgba(255,255,255,0.4)')
     fig0a.add_trace(go.Scatter(
         x=_x_idx, y=_hp['avg_hr'], mode='lines+markers',
